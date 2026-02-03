@@ -13,6 +13,9 @@ export default defineConfig(({ mode }) => {
   const targetUrl = env.VITE_API_BASE_URL_SOURCE || 'https://berita-indo-api-next.vercel.app';
 
   return {
+    // Pengaturan 'base' ini krusial buat hosting di sub-folder (misal: domain.com/portal-berita/)
+    // Biar browser tau semua file JS/CSS ada di folder tersebut, bukan di root domain.
+    base: '/portal-berita/',
     plugins: [react(), tailwindcss()],
     server: {
       proxy: {

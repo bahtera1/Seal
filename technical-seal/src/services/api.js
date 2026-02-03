@@ -1,97 +1,71 @@
 import axios from 'axios';
 
-// Pure Config: Base URL comes strictly from Environment Variables
-const BASE_URL = import.meta.env.VITE_API_BASE_URL;
+// Kita pakai proxy PHP buatan kita sendiri untuk lewatin blokir CORS di cPanel
+// Path-nya harus sesuai dengan lokasi hosting kamu
+const PROXY_URL = '/portal-berita/proxy.php?url=';
+const REAL_API_URL = 'https://berita-indo-api-next.vercel.app/api';
 
-const ANTARA_BASE_URL = `${BASE_URL}/antara-news/`;
-const CNN_BASE_URL = `${BASE_URL}/cnn-news/`;
+export const fetchNews = async (category) => {
+  const isCnn = CNN_CATEGORIES.some(c => c.id === category);
+  return isCnn ? fetchCnnNews(category) : fetchAntaraNews(category);
+};
 
-// Antara News categories
-export const ANTARA_CATEGORIES = [
-  { id: 'terkini', label: 'Terkini' },
-  { id: 'top-news', label: 'Top News' },
-];
+export const fetchAntaraNews = async (category) => {
+  try {
+    const targetUrl = `${REAL_API_URL}/antara-news/${category}`;
+    // Panggil lewat proxy
+    const response = await axios.get(`${PROXY_URL}${encodeURIComponent(targetUrl)}`);
+    return (response.data.data || []).map(normalizeAntaraItem);
+  } catch (error) {
+    console.error(`Gagal ambil Antara:`, error.message);
+    return [];
+  }
+};
 
-// CNN News categories (for navigation)
-export const CNN_CATEGORIES = [
-  { id: 'nasional', label: 'Nasional' },
-  { id: 'internasional', label: 'Internasional' },
-  { id: 'ekonomi', label: 'Ekonomi' },
-  { id: 'olahraga', label: 'Olahraga' },
-  { id: 'teknologi', label: 'Teknologi' },
-  { id: 'hiburan', label: 'Hiburan' },
-  { id: 'gaya-hidup', label: 'Gaya Hidup' },
-];
+export const fetchCnnNews = async (category) => {
+  try {
+    const targetUrl = `${REAL_API_URL}/cnn-news/${category}`;
+    // Panggil lewat proxy
+    const response = await axios.get(`${PROXY_URL}${encodeURIComponent(targetUrl)}`);
+    return (response.data.data || []).map(normalizeCnnItem);
+  } catch (error) {
+    console.error(`Gagal ambil CNN:`, error.message);
+    return [];
+  }
+};
 
-// Normalisasi Data CNN (Adapter Pattern)
-// Mengubah struktur data CNN agar seragam dengan Antara News.
-// API CNN seringkali memiliki struktur nested (image.large), sedangkan kita butuh flat object.
-const normalizeCnnItem = (item) => ({
+const normalizeAntaraItem = (item) => ({
   title: item.title,
   link: item.link,
-  description: item.contentSnippet || '', // Fallback jika description kosong
+  description: item.description,
   isoDate: item.isoDate,
-  image: item.image?.large || item.image?.small || '', // Ambil resolusi terbaik
-  source: 'cnn',
-});
-
-// Normalisasi Data Antara
-// Menambahkan properti 'source' untuk keperluan styling UI yang berbeda
-const normalizeAntaraItem = (item) => ({
-  ...item,
+  image: item.image,
   source: 'antara',
 });
 
-/**
- * Mengambil berita dari Antara News API
- * Digunakan untuk: Headline & Popular News (Home), dan Kategori khusus (Terkini/Top News)
- * 
- * @param {string} category - Kategori berita (terkini, top-news)
- * @returns {Promise<Array>} List berita yang sudah dinormalisasi
- */
-export const fetchAntaraNews = async (category = 'terkini') => {
-  try {
-    const response = await axios.get(`${ANTARA_BASE_URL}${category}`);
-    if (response.data && response.data.data) {
-      return response.data.data.map(normalizeAntaraItem);
-    }
-    return [];
-  } catch (error) {
-    console.error(`Error fetching Antara news for category ${category}:`, error);
-    return [];
-  }
-};
+const normalizeCnnItem = (item) => ({
+  title: item.title,
+  link: item.link,
+  description: item.contentSnippet || '',
+  isoDate: item.isoDate,
+  image: item.image?.large || item.image?.small || '',
+  source: 'cnn',
+});
 
-/**
- * Mengambil berita dari CNN News API
- * Digunakan untuk: Kategori utama (Nasional, Internasional, dll)
- * 
- * @param {string} category - Kategori berita (nasional, internasional, dll)
- * @returns {Promise<Array>} List berita yang sudah dinormalisasi
- */
-export const fetchCnnNews = async (category = 'nasional') => {
-  try {
-    const response = await axios.get(`${CNN_BASE_URL}${category}`);
-    if (response.data && response.data.data) {
-      return response.data.data.map(normalizeCnnItem);
-    }
-    return [];
-  } catch (error) {
-    console.error(`Error fetching CNN news for category ${category}:`, error);
-    return [];
-  }
-};
+export const ANTARA_CATEGORIES = [
+  { id: 'terkini', name: 'Terkini' },
+  { id: 'top-news', name: 'Top News' },
+  { id: 'politik', name: 'Politik' },
+  { id: 'ekonomi', name: 'Ekonomi' },
+  { id: 'bola', name: 'Sepak Bola' },
+];
 
-/**
- * Generic fetcher untuk kemudahan penggunaan
- * Mengatur routing ke API source yang tepat berdasarkan parameter
- */
-export const fetchNews = async (category = 'terkini', source = 'antara') => {
-  // Jika kategori termasuk dalam CNN Categories, gunakan CNN
-  const isCnn = CNN_CATEGORIES.some(c => c.id === category) || source === 'cnn';
-
-  if (isCnn) {
-    return fetchCnnNews(category);
-  }
-  return fetchAntaraNews(category);
-};
+export const CNN_CATEGORIES = [
+  { id: 'nasional', name: 'Nasional' },
+  { id: 'internasional', name: 'Internasional' },
+  { id: 'ekonomi', name: 'Ekonomi' },
+  { id: 'olahraga', name: 'Olahraga' },
+  { id: 'teknologi', name: 'Teknologi' },
+  { id: 'hiburan', name: 'Hiburan' },
+  { id: 'gaya-hidup', name: 'Gaya Hidup' },
+];

@@ -12,7 +12,11 @@ const ArticlePage = React.lazy(() => import('./pages/ArticlePage'));
 
 function App() {
   return (
-    <Router>
+    /* 
+      basename="/portal-berita" dipake biar React Router tau kalau path awal kita 
+      dimulai dari folder tersebut. Sangat penting buat hosting non-root domain!
+    */
+    <Router basename="/portal-berita">
       <ScrollToTop />
       <Layout>
         {/* Suspense shows the Loading component while the page code is being downloaded */}
