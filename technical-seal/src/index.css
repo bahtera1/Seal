@@ -1,0 +1,11 @@
+@import "tailwindcss";
+
+/* Base Styles */
+body {
+  background-color: #F8FAFC;
+  /* slate-50 */
+  color: #1E293B;
+  /* slate-800 */
+  font-family: 'Inter', system-ui, sans-serif;
+  /* Best practice: add font stack */
+}
