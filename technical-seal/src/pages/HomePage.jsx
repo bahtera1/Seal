@@ -11,6 +11,7 @@ import { ChevronRight } from 'lucide-react';
 
 const HomePage = () => {
     const navigate = useNavigate();
+    const [searchQuery, setSearchQuery] = useState('');
     // State for all news data
     const [topNews, setTopNews] = useState([]);
     const [cnnNews, setCnnNews] = useState([]);
@@ -114,19 +115,32 @@ const HomePage = () => {
                     </div>
 
                     {/* Search Input Filter */}
-                    <div className="relative">
+                    <div className="relative group">
                         <input
                             type="text"
                             placeholder="Cari disini..."
-                            className="pl-4 pr-10 py-2 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-[#0091FF] text-sm w-48 md:w-64"
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                            className="pl-4 pr-10 py-2 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-[#0091FF] text-sm w-48 md:w-64 transition-all"
                             onKeyDown={(e) => {
-                                if (e.key === 'Enter') {
+                                if (e.key === 'Enter' && searchQuery.trim()) {
                                     // Pindah halaman ke Search Page tanpa refresh loading
-                                    navigate(`/search?q=${e.target.value}`);
+                                    navigate(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
                                 }
                             }}
                         />
-                        <svg className="w-4 h-4 text-slate-400 absolute right-3 top-1/2 -translate-y-1/2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                        <button
+                            onClick={() => {
+                                if (searchQuery.trim()) {
+                                    navigate(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
+                                }
+                            }}
+                            className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-[#0091FF] transition-colors cursor-pointer"
+                        >
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                            </svg>
+                        </button>
                     </div>
                 </div>
 

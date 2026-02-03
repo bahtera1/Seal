@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { fetchAntaraNews } from '../services/api';
+import { fetchNews } from '../services/api';
 import NewsGrid from '../components/news/NewsGrid';
 import Loading from '../components/ui/Loading';
 import usePagination from '../hooks/usePagination';
@@ -20,17 +20,31 @@ const SearchPage = () => {
             setLoading(true);
             setError(null);
             try {
-                // Fetch from multiple categories to get better results
-                const [terkini, topNews] = await Promise.all([
-                    fetchAntaraNews('terkini'),
-                    fetchAntaraNews('top-news')
+                // Tarik data dari SELURUH kategori yang tersedia (Antara & CNN) demi hasil pencarian maksimal
+                const [
+                    terkini, top, nasional, internasional, ekonomi, olahraga, teknologi, hiburan, gaya
+                ] = await Promise.all([
+                    fetchNews('terkini'),      // Antara
+                    fetchNews('top-news'),     // Antara
+                    fetchNews('nasional'),     // CNN
+                    fetchNews('internasional'),// CNN
+                    fetchNews('ekonomi'),      // CNN
+                    fetchNews('olahraga'),     // CNN
+                    fetchNews('teknologi'),    // CNN
+                    fetchNews('hiburan'),      // CNN
+                    fetchNews('gaya-hidup')    // CNN
                 ]);
 
-                // Combine and Deduplicate
-                const combined = [...terkini, ...topNews];
+                // Gabungkan semua kategori menjadi satu pool data besar
+                const combined = [
+                    ...terkini, ...top, ...nasional, ...internasional,
+                    ...ekonomi, ...olahraga, ...teknologi, ...hiburan, ...gaya
+                ];
+
+                // Hapus duplikat berdasarkan link
                 const uniqueNews = Array.from(new Map(combined.map(item => [item.link, item])).values());
 
-                // Client-side Filter
+                // Client-side Filter berdasarkan Judul & Deskripsi
                 const filtered = uniqueNews.filter(news =>
                     news.title.toLowerCase().includes(query.toLowerCase()) ||
                     (news.description && news.description.toLowerCase().includes(query.toLowerCase()))
@@ -38,6 +52,7 @@ const SearchPage = () => {
 
                 setAllData(filtered);
             } catch (err) {
+                console.error("Search error:", err);
                 setError(err);
             } finally {
                 setLoading(false);
@@ -52,7 +67,7 @@ const SearchPage = () => {
         }
     }, [query]);
 
-    // Apply pagination
+    // Apply pagination logic
     const {
         currentPage,
         itemsPerPage,
@@ -92,7 +107,7 @@ const SearchPage = () => {
                 <>
                     <NewsGrid newsList={paginatedData} />
 
-                    {/* Pagination */}
+                    {/* Pagination UI */}
                     {totalPages > 1 && (
                         <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mt-12 pt-6 border-t border-slate-100">
                             <div className="flex items-center gap-2 text-sm text-slate-500">
@@ -115,8 +130,8 @@ const SearchPage = () => {
                                     onClick={() => handlePageChange(currentPage - 1)}
                                     disabled={currentPage === 1}
                                     className={`w-8 h-8 rounded flex items-center justify-center transition-colors ${currentPage === 1
-                                            ? 'text-slate-300 cursor-not-allowed'
-                                            : 'text-slate-400 hover:bg-slate-100'
+                                        ? 'text-slate-300 cursor-not-allowed'
+                                        : 'text-slate-400 hover:bg-slate-100'
                                         }`}
                                 >
                                     <ChevronRight className="w-4 h-4 rotate-180" />
@@ -135,8 +150,8 @@ const SearchPage = () => {
                                                 key={page}
                                                 onClick={() => handlePageChange(page)}
                                                 className={`px-3 py-1 text-sm rounded transition-colors ${currentPage === page
-                                                        ? 'text-[#0091FF] font-medium'
-                                                        : 'text-slate-500 hover:bg-slate-100'
+                                                    ? 'text-[#0091FF] font-medium'
+                                                    : 'text-slate-500 hover:bg-slate-100'
                                                     }`}
                                             >
                                                 {page}
@@ -149,8 +164,8 @@ const SearchPage = () => {
                                     onClick={() => handlePageChange(currentPage + 1)}
                                     disabled={currentPage === totalPages}
                                     className={`w-8 h-8 rounded flex items-center justify-center transition-colors ${currentPage === totalPages
-                                            ? 'text-slate-300 cursor-not-allowed'
-                                            : 'text-slate-400 hover:bg-slate-100'
+                                        ? 'text-slate-300 cursor-not-allowed'
+                                        : 'text-slate-400 hover:bg-slate-100'
                                         }`}
                                 >
                                     <ChevronRight className="w-4 h-4" />
